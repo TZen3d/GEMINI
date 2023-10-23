@@ -1,0 +1,100 @@
+<html>
+
+<head>
+    <link rel="icon" href="./demo/favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="./demo/global.css" />
+    <link rel="stylesheet" type="text/css" href="./demo/iconfont/iconfont.css" />
+    <link rel="stylesheet" href="./demo/compare/dxfComparePanel.css" />
+    <link rel="stylesheet" href="./demo/settings/SettingsPanel.css" />
+    <style>
+        #myCanvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="myCanvas" class="container"></div>
+    </div>
+    <script type="module">
+        import {
+            AxisGizmoPlugin,
+            BaseDxfCompareHelper,
+            DxfViewer,
+            DxfViewerToolbarPlugin,
+            LayerManagerPlugin,
+            MeasurementPlugin,
+            ScreenshotPlugin,
+            ToolbarMenuId,
+            ViewerEvent,
+        } from "./demo/libs/gemini-viewer.esm.min.js";
+        import DxfComparePanel from "./demo/compare/dxfComparePanel.js"
+        import DxfSettingsPanel from "./demo/settings/DxfSettingsPanel.js";
+
+        const url1 = "./demo/models/dxf/doors_and_windows.dxf";
+        const url2 = "./demo/models/dxf/doors_and_windows_mopdified.dxf";
+        const config = {
+            containerId: "myCanvas",
+            enableSpinner: true,
+            enableProgressBar: true,
+            enableLayoutBar: true,
+        };
+        const compareHelper = new BaseDxfCompareHelper(config);
+        // const fontFiles = ["./demo/libs/fonts/Microsoft_YaHei_Regular.typeface.json"];
+        const fontFiles = ["./demo/libs/fonts/hztxt.shx", "./demo/libs/fonts/simplex.shx"];
+        await compareHelper.setFont(fontFiles);
+        window.compareHelper = compareHelper;
+
+        const viewer = compareHelper.viewer;
+        window.compareHelper = compareHelper;
+
+        const menuConfig = {
+            [ToolbarMenuId.Settings]: {
+                onActive: () => {
+                    console.log("[Toolbar]", "Activate Settings");
+                    if (!window.dxfSettingsPanel) {
+                        window.dxfSettingsPanel = new DxfSettingsPanel(compareHelper.viewer);
+                    }
+                    window.dxfSettingsPanel.show();
+                },
+                onDeactive: () => {
+                    console.log("[Toolbar]", "Deactivate Settings");
+                    window.dxfSettingsPanel.hide();
+                },
+            },
+            [ToolbarMenuId.Layers]: {
+                onActive: () => {
+                    console.log("[Toolbar]", "Activate Layers");
+                    if (!window.layerManager) {
+                        window.layerManager = new LayerManagerPlugin(compareHelper.viewer)
+                        window.layerManager.addEventListener("Visibilitychange", (visible) => {
+                            window.toolbar.setActive("Layers", visible);
+                        });
+                    }
+                    window.layerManager.show();
+                },
+                onDeactive: () => {
+                    console.log("[Toolbar]", "Deactivate Layers");
+                    window.layerManager.hide();
+                },
+            },
+        };
+        new AxisGizmoPlugin(viewer, { ignoreZAxis: true });
+        new MeasurementPlugin(viewer);
+        new ScreenshotPlugin(viewer);
+        window.toolbar = new DxfViewerToolbarPlugin(viewer, { menuConfig });
+
+        const onProgress = (event) => {
+            const progress = ((event.loaded * 100) / event.total).toFixed(1);
+            console.log(`[Demo] Loading progress: ${progress}%`);
+        };
+        await compareHelper.compare({src: url1, modelId: "doors_and_windows.dxf"}, {src: url2, modelId: "doors_and_windows_mopdified.dxf"}, onProgress).then(() => {
+            console.log(`[Demo] Compared models: ${url1}, ${url2}`);
+        });
+
+    </script>
+</body>
+
+</html>

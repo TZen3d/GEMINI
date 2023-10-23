@@ -1,0 +1,66 @@
+<html>
+
+<head>
+    <link rel="icon" href="./demo/favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="./demo/global.css" />
+    <style>
+        #myCanvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="myCanvas" class="container"></div>
+    </div>
+    <script type="module">
+        import {
+            AxisGizmoPlugin,
+            BimViewer,
+            BimViewerToolbarPlugin,
+            BottomBarPlugin,
+            ContextMenuPlugin,
+            GroundShadowPlugin,
+            ViewCubePlugin,
+        } from "./demo/libs/gemini-viewer.esm.min.js";
+
+        const filename = "Duplex.gltf";
+        const modelCfg = {
+            modelId: filename,
+            name: filename,
+            src: `./demo/models/gltf/${filename}`,
+            edges: true,
+        };
+        const viewerCfg = {
+            containerId: "myCanvas",
+            language: "en",
+            enableProgressBar: true,
+        }
+        const viewer = new BimViewer(viewerCfg);
+
+        new AxisGizmoPlugin(viewer);
+        new BimViewerToolbarPlugin(viewer);
+        new BottomBarPlugin(viewer);
+        new ContextMenuPlugin(viewer);
+        new GroundShadowPlugin(viewer);
+        new ViewCubePlugin(viewer);
+
+        // draco decoder path is needed to load draco encoded models.
+        // gemini-viewer js sdk user maintains draco decoder code somewhere, and provides the path here.
+        const decoderPath = "./demo/libs/draco/gltf/";
+        viewer.setDracoDecoderPath(decoderPath);
+
+        viewer.loadModel(modelCfg, (event) => {
+            const progress = ((event.loaded * 100) / event.total).toFixed(1);
+            console.log(`[Demo] Loading '${modelCfg.id || modelCfg.name}' progress: ${progress}%`);
+        }, (event) => {
+            console.error("[Demo] Failed to load " + modelCfg.src + ". " + event.message);
+        }).then(() => {
+            console.log(`[Demo] Loaded model ${modelCfg.src}`);
+        });
+    </script>
+</body>
+
+</html>
